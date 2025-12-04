@@ -67,7 +67,7 @@ def print_timed(msg):
 
 
 def watch_events():
-    client = docker.DockerClient()
+    client = docker.DockerClient(version='auto')
     try:
         for event in client.events(decode=True):
             if event['Type'] == 'container':
@@ -100,6 +100,10 @@ def watch_events():
 if __name__ == '__main__':
     print_timed(f'Start prometheus client on port {PROMETHEUS_EXPORT_PORT}')
     start_http_server(PROMETHEUS_EXPORT_PORT, addr='0.0.0.0')
+    
+    last_failure = datetime.now()
+    failure_count = 0
+    
     while True:
         try:
             print_timed('Watch docker events')
@@ -109,8 +113,7 @@ if __name__ == '__main__':
 
             traceback.print_exc()
 
-            last_failure = last_failure
-            if last_failure < (now - timedelta.seconds(RETRY_BACKOFF * 10)):
+            if last_failure < (now - timedelta(seconds=RETRY_BACKOFF * 10)):
                 print_timed("detected docker APIError, but last error was a bit back, resetting failure count.")
                 # last failure was a while back, reset
                 failure_count = 0
