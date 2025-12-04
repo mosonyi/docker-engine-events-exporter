@@ -71,6 +71,10 @@ def watch_events():
     try:
         for event in client.events(decode=True):
             if event['Type'] == 'container':
+                # Skip events without status field
+                if 'status' not in event:
+                    continue
+                    
                 # TODO: make it configurable which states to not export
                 if event['status'].startswith(('exec_start', 'exec_create', 'exec_detach')):
                     # ignore exec_start, exec_create and exec_detach, these dont seem helpful
